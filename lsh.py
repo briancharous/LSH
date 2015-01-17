@@ -43,8 +43,6 @@ def init_sig_matrix(rows, cols):
 def signature_matrix(functions, docs): 
     """ Return a signature matrix with given hash function lists and attribute lists
     """
-    infinity = float ('inf')
-    cur_stored = infinity
     rows = len(functions)
     columns =  len (docs)
     matrix = init_sig_matrix(rows, columns)
@@ -53,9 +51,8 @@ def signature_matrix(functions, docs):
             words = docs.get(doc)   # get a list of words for each document
             for word in words:
                 cur_value = function(word)
-                if cur_value < cur_stored:  
-                    cur_stored = cur_value
-                    matrix[i][doc-1] = cur_stored
+                if cur_value < matrix[i][doc-1]:  
+                    matrix[i][doc-1] = cur_value
 
     return matrix
 
