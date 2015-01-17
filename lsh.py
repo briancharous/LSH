@@ -35,15 +35,26 @@ def compute_jaccard(doc_id_1, doc_id_2, docs):
     d2 = docs[doc_id_2]
     return len(d1 & d2)/len(d1 | d2)
 
-""" Return a signature matrix with given hash function lists and attribute lists
-"""
-def signature_matrix(functions, docs): 
-    functions = functions
+def signature_matrix(functions, docs, key_dict): 
+    """ Return a signature matrix with given hash function lists and attribute lists
+    """
+    infinity = float ('inf')
+    cur_stored = infinity
+    rows = len(functions)
+    columns =  len (docs)
+    matrix = init_sig_matrix(rows, columns)
     # For each function, generates the signature matrix
     for function in functions:  
         for doc in docs:
+            words = docs.get(doc)   # get a list of words for each document
+                for word in words:
+                    cur_value = function(key_dict[word])
+                    if cur_value < cur_value:
+                        cur_stored = cur_value
+            
 
-            words = doc.get(doc_id)
+
+
 
 
 def main():
