@@ -4,6 +4,7 @@ import random
 
 def get_data(filename, lines):
     docs = dict()
+    all_words = set()
     with open(filename, 'r') as f:
         for i in range(3):
             f.next() # skip first 3 lines
@@ -17,8 +18,9 @@ def get_data(filename, lines):
                 docs[components_int[0]].add(components_int[1])
             else:
                 docs[components_int[0]] = set([components_int[1]])
+            all_words.add(components_int[1])
             linenum+=1
-    return docs
+    return docs, all_words
 
 def gen_hash_func(n):
     """ generate has function of the form h(x) = ax + b mod n
@@ -49,11 +51,13 @@ def signature_matrix(functions, docs):
     for i, function in enumerate(functions): 
         for doc in docs:
             words = docs.get(doc)   # get a list of words for each document
-                for word in words:
-                    cur_value = function(word)
-                    if cur_value < cur_stored:  
-                        cur_stored = cur_value
-                        matrix[i][doc-1] = cur_stored
+            for word in words:
+                cur_value = function(word)
+                if cur_value < cur_stored:  
+                    cur_stored = cur_value
+                    matrix[i][doc-1] = cur_stored
+
+    return matrix
 
 def main():
     num_docs = None
@@ -61,9 +65,13 @@ def main():
         num_docs = sys.maxint
     else:
         num_docs = int(sys.argv[2])
-    docs = get_data(sys.argv[1], num_docs)
-    print compute_jaccard(1, 108, docs)
-    h = gen_hash_func(len(docs))
+    docs, all_words = get_data(sys.argv[1], num_docs)
+    funcs = [gen_hash_func(len(all_words)) for i in xrange(int(sys.argv[3]))]
+    m = signature_matrix(funcs, docs)
+    print m
+    print len(m[0])
+    # print compute_jaccard(1, 108, docs)
+    # h = gen_hash_func(len(docs))
 
 if __name__ == '__main__':
     main()
