@@ -46,13 +46,14 @@ def signature_matrix(functions, docs):
     rows = len(functions)
     columns =  len (docs)
     matrix = init_sig_matrix(rows, columns)
-    for function in functions: 
+    for i, function in enumerate(functions): 
         for doc in docs:
             words = docs.get(doc)   # get a list of words for each document
                 for word in words:
                     cur_value = function(word)
-                    if cur_value < cur_value:
+                    if cur_value < cur_stored:
                         cur_stored = cur_value
+
 
     
 
