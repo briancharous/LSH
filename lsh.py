@@ -1,5 +1,6 @@
 from __future__ import division
 import sys
+import random
 
 def get_data(filename, lines):
     docs = dict()
@@ -18,6 +19,16 @@ def get_data(filename, lines):
                 docs[components_int[0]] = set([components_int[1]])
             linenum+=1
     return docs
+
+def gen_hash_func(n):
+    """ generate has function of the form h(x) = ax + b mod n
+    where and n is the number of words in the dataset 
+    and a & b are chosen pseudorandomly in the range 0 to n-1"""
+    a = random.randint(0, n-1)
+    b = random.randint(0, n-1)
+    def hash(x):
+        return (a*x+b)%n
+    return hash
 
 def compute_jaccard(doc_id_1, doc_id_2, docs):
     d1 = docs[doc_id_1]
@@ -43,6 +54,7 @@ def main():
         num_docs = int(sys.argv[2])
     docs = get_data(sys.argv[1], num_docs)
     print compute_jaccard(1, 108, docs)
+    h = gen_hash_func(len(docs))
 
 if __name__ == '__main__':
     main()
