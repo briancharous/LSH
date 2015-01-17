@@ -56,6 +56,13 @@ def signature_matrix(functions, docs):
 
     return matrix
 
+def jarccard_probability(matrix, doc_id_1, doc_id_2, n):
+    same_count = 0
+    for i in range(n):  #loop though n rows of the matrix
+        if matrix[i][doc_id_1] == matrix[i][doc_id_2]:
+            same_count + =1
+    return same_count/n
+
 def main():
     num_docs = None
     if sys.argv[2] == 'all':
