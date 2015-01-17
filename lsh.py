@@ -1,3 +1,4 @@
+from __future__ import division
 import sys
 
 def get_data(filename, lines):
@@ -30,7 +31,7 @@ def main():
     else:
         num_docs = int(sys.argv[2])
     docs = get_data(sys.argv[1], num_docs)
-    print compute_jaccard(1, 1, docs)
+    print compute_jaccard(1, 108, docs)
 
 if __name__ == '__main__':
     main()
