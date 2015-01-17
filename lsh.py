@@ -1,8 +1,24 @@
+""" 
+lsh.py by Brian Charous and Yawen Chen
+for CS324 Winter 2015
+
+This program takes in a text file with word counts and 
+computes the jaccard similarity between 2 documents and
+estimates the jaccard similarity by generating a signature matrix
+
+To run: argument 1 is the filename containing the word counts
+        argument 2 is the number of lines to read from said file; 'all' is equivalent to the number of lines in the file
+        argument 3 is number of has functions to generate for the signature matrix
+        arguments 4 and 5 are the document ids of of which to compute the jaccard similarity
+
+"""
+
 from __future__ import division
 import sys
 import random
 
 def get_data(filename, lines):
+    """ read in data from filename """
     docs = dict()
     all_words = set()
     with open(filename, 'r') as f:
@@ -33,11 +49,14 @@ def gen_hash_func(n):
     return hash
 
 def compute_jaccard(doc_id_1, doc_id_2, docs):
+    """ compute jaccard similarity between 2 documents 
+    using formula |A intersect B|/|A union B|"""
     d1 = docs[doc_id_1]
     d2 = docs[doc_id_2]
     return len(d1 & d2)/len(d1 | d2)
 
 def init_sig_matrix(rows, cols):
+    """ init signature matrix of rows and cols with vals all infinity """
     return [[float('inf') for i in xrange(cols)] for j in xrange(rows)]
 
 def signature_matrix(functions, docs): 
@@ -60,22 +79,29 @@ def jarccard_probability(matrix, doc_id_1, doc_id_2, n):
     same_count = 0
     for i in range(n):  #loop though n rows of the matrix
         if matrix[i][doc_id_1] == matrix[i][doc_id_2]:
-            same_count + =1
+            same_count += 1
     return same_count/n
 
 def main():
+    if len(sys.argv) != 6:
+        print "Usage: pypy {0} input_file num_lines num_hash_functions doc_1_id doc_id_2".format(sys.argv[0])
+        exit(0)
+
     num_docs = None
     if sys.argv[2] == 'all':
         num_docs = sys.maxint
     else:
         num_docs = int(sys.argv[2])
     docs, all_words = get_data(sys.argv[1], num_docs)
-    funcs = [gen_hash_func(len(all_words)) for i in xrange(int(sys.argv[3]))]
+    random.seed(27945)
+    num_hash_funcs = int(sys.argv[3])
+    funcs = [gen_hash_func(len(all_words)) for i in xrange(num_hash_funcs)]
     m = signature_matrix(funcs, docs)
-    print m
-    print len(m[0])
-    # print compute_jaccard(1, 108, docs)
-    # h = gen_hash_func(len(docs))
+    doc_id_1 = int(sys.argv[4])
+    doc_id_2 = int(sys.argv[5])
+    jaccard_estimate = jarccard_probability(m, doc_id_1, doc_id_2, num_hash_funcs)
+    actual_jaccard = compute_jaccard(doc_id_1, doc_id_2, docs)
+    print "Estimated jaccard: {0}, actual jaccard: {1}".format(jaccard_estimate, actual_jaccard)
 
 if __name__ == '__main__':
     main()
