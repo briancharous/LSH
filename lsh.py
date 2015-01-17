@@ -35,6 +35,10 @@ def compute_jaccard(doc_id_1, doc_id_2, docs):
     d2 = docs[doc_id_2]
     return len(d1 & d2)/len(d1 | d2)
 
+def init_sig_matrix(rows, cols):
+    return [[float('inf') for i in xrange(cols)] for j in xrange(rows)]
+
+
 """ Return a signature matrix with given hash function lists and attribute lists
 """
 def signature_matrix(functions, docs): 
