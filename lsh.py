@@ -64,21 +64,25 @@ def signature_matrix(functions, docs):
     """
     rows = len(functions)
     columns =  len (docs)
-    matrix = init_sig_matrix(rows, columns)
+    matrix = init_sig_matrix(rows, columns)     #initialiing the matrix
     for i, function in enumerate(functions): 
         for doc in docs:
             words = docs.get(doc)   # get a list of words for each document
             for word in words:
                 cur_value = function(word)
-                if cur_value < matrix[i][doc-1]:  
+                if cur_value < matrix[i][doc-1]:    # replace if current value is smaller than the stored value
                     matrix[i][doc-1] = cur_value
 
     return matrix
 
 def jarccard_probability(matrix, doc_id_1, doc_id_2, n):
+    """ Returns the approximated jaccard similarity of two documents 
+         computed through computing the probrability of having the same min-hash 
+         given n number of fash functions
+    """
     same_count = 0
     for i in range(n):  #loop though n rows of the matrix
-        if matrix[i][doc_id_1-1] == matrix[i][doc_id_2-1]:
+        if matrix[i][doc_id_1-1] == matrix[i][doc_id_2-1]: #check if the min-hash values are the same
             same_count += 1
     return same_count/n
 
