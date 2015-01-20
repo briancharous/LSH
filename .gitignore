@@ -1,4 +1,5 @@
 docword.enron.txt
+*.dat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
