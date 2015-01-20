@@ -108,14 +108,10 @@ def load_sig_matrix(filename):
     return None
 
 def main():
-    # if len(sys.argv) != 6:
-    #     print "Usage: pypy {0} input_file num_lines num_hash_functions doc_1_id doc_id_2".format(sys.argv[0])
-    #     exit(0)
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--words', required=True, help='File containing document word counts')
     parser.add_argument('-l', '--lines', required=False, help='Number of lines to read from the words file')
-    parser.add_argument('-n', '--number_of_hashes', required=True, help='Number of has functions to include in the signature matrix')
+    parser.add_argument('-n', '--number_of_hashes', required=False, help='Number of has functions to include in the signature matrix')
     parser.add_argument('-d1', '--document1', required=True, help='First document ID to compare')
     parser.add_argument('-d2', '--document2', required=True, help='Second document ID to compare')
     parser.add_argument('-o', '--matrix_output', required=False, help='Filename to dump matrix to')
@@ -134,17 +130,22 @@ def main():
     print(" done!")
 
     matrix = None
-    num_hash_funcs = int(args.number_of_hashes)
+    num_hash_funcs = None
     if args.matrix_file is not None:
         # read in sig matrix from file
         sys.stdout.write("Reading matrix from file...")
         sys.stdout.flush()
         with open(args.matrix_file, 'r') as f:
             matrix = marshal.load(f)
+            num_hash_funcs = len(matrix)
         print(" done!")
     else:
         print("Generating signature matrix...")      
         random.seed(27945)
+        if num_hash_funcs is None:
+            print "Error: number of hash functions is required when generating a signature matrix"
+            exit(0)
+        num_hash_funcs = int(args.number_of_hashes)
         funcs = [gen_hash_func(len(all_words)) for i in xrange(num_hash_funcs)]
         matrix = signature_matrix(funcs, docs)
 
