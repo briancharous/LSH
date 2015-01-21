@@ -19,6 +19,7 @@ import random
 import marshal
 import argparse
 import heapq
+from collections import defaultdict
 
 def get_data(filename, lines):
     """ read in data from filename """
@@ -141,6 +142,24 @@ def load_sig_matrix(filename):
         return matrix
     return None
 
+def create_band_hashes(matrix, b):
+    """ Do LSH on matrix using b bands """
+    hashes = []
+    for i in xrange(0, len(matrix), b):
+        rows = matrix[i:i+b]
+        tohash = []
+        for j in xrange(0, len(rows[0])):
+            # get a list containing 1 element from each row in a band at index j (doc id)
+            column_elem = []
+            for k in xrange(0, len(rows)):
+                column_elem.append(rows[k][j])
+            tohash.append((tuple(column_elem), j+1)) # j+1 should be doc id     
+        d = defaultdict(set)
+        for key, value in tohash:
+            d[key].add(value)
+        hashes.append(d)
+    return hashes
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--words', required=True, help='File containing document word counts')
@@ -200,10 +219,12 @@ def main():
     print "Estimated jaccard: {0}, actual jaccard: {1}".format(jaccard_estimate, actual_jaccard)
 
     # brute force nearest neighbors
-    print "Finding average jaccard by using nearest neighbors brute force..."
-    jaccard_all = brute_force_jaccard_all(int(args.k), docs)
+    # print "Finding average jaccard by using nearest neighbors brute force..."
+    # jaccard_all = brute_force_jaccard_all(int(args.k), docs)
     # nearest_neighbors_str = [str(i[1]) for i in nearest_neighbors]
-    print "Average jaccard similarity is {0}".format(jaccard_all)
+    # print "Average jaccard similarity is {0}".format(jaccard_all)
+
+    band_hashes = create_band_hashes(matrix, 3)
 
 if __name__ == '__main__':
     main()
