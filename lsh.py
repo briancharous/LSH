@@ -159,6 +159,20 @@ def create_band_hashes(matrix, b):
             d[key].add(value)
         hashes.append(d)
     return hashes
+    
+def find_k_neighbors_of_set (k,ref_doc_id, set, docs):
+    ''' returns k nearest neighbors of a given set and parameter k 
+    '''
+    nearest_neighbors = []
+    for neighbor in set:
+        if neighbor != ref_doc_id:
+            jarcard_compare = compute_jaccard (ref_doc_id, neighbor, docs)
+            if len(nearest_neighbors) < k:
+                nearest_neighbors.append(jaccard_compare, ref_doc_id)
+                if len(nearest_neighbors) == k:
+                     heapq.heappush(nearest_neighbors, (jaccard_compare, doc_id))
+                      heapq.heappop(nearest_neighbors)
+    return nearest_neighbors
 
 def main():
     parser = argparse.ArgumentParser()
