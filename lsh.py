@@ -20,8 +20,6 @@ import marshal
 import argparse
 import heapq
 
-from max_heap import MaxHeap
-
 def get_data(filename, lines):
     """ read in data from filename """
     docs = dict()
@@ -98,6 +96,39 @@ def jarccard_probability(matrix, doc_id_1, doc_id_2, n):
             same_count += 1
     return same_count/n
 
+def brute_force_nearest_neighbors(k, ref_doc_id, docs):
+    """ brute force out k nearest neighbors for a given document id"""
+    nearest_neighbors = []
+    for doc_id in docs:
+        if ref_doc_id != doc_id:
+            jaccard_compare = compute_jaccard(ref_doc_id, doc_id, docs)
+            if len(nearest_neighbors) < k:
+                nearest_neighbors.append((jaccard_compare, ref_doc_id))
+                if len(nearest_neighbors) == k:
+                    heapq.heapify(nearest_neighbors)
+            else:
+                heapq.heappush(nearest_neighbors, (jaccard_compare, doc_id))
+                heapq.heappop(nearest_neighbors)
+    return nearest_neighbors
+
+def brute_force_jaccard_all(k, docs):
+    """ brute force an average jaccard score over all documents using k nearest neighbors """
+    jsum = 0
+    d = len(docs)
+    index = 0
+    for doc in docs:
+        neighbors = brute_force_nearest_neighbors(k, doc, docs)
+        average = sum([i[0] for i in neighbors])/k
+        jsum += average
+
+        percent = (index/d)*100
+        sys.stdout.write('\r[{0}] {1}%'.format('#'*int(percent/5), round(percent,2)))
+        sys.stdout.flush()
+        index+=1
+
+    sys.stdout.write('\r[{0}] {1}%\n'.format('#'*int(100/5), 100))
+    return jsum/len(docs)
+
 def save_sig_matrix(matrix, filename):
     """ dump signature matrix to file so it doesn't constantly have to be recreated """
     with open(filename, 'w') as f:
@@ -119,6 +150,8 @@ def main():
     parser.add_argument('-d2', '--document2', required=True, help='Second document ID to compare')
     parser.add_argument('-o', '--matrix_output', required=False, help='Filename to dump matrix to')
     parser.add_argument('-m', '--matrix_file', required=False, help='Filename of saved signature matrix')
+    parser.add_argument('-k', '--k', required=True, help='Number of nearest neighbors to find')
+
     args = parser.parse_args()
 
     # read in words
@@ -145,10 +178,10 @@ def main():
     else:
         print("Generating signature matrix...")      
         random.seed(27945)
+        num_hash_funcs = int(args.number_of_hashes)
         if num_hash_funcs is None:
             print "Error: number of hash functions is required when generating a signature matrix"
             exit(0)
-        num_hash_funcs = int(args.number_of_hashes)
         funcs = [gen_hash_func(len(all_words)) for i in xrange(num_hash_funcs)]
         matrix = signature_matrix(funcs, docs)
 
@@ -159,11 +192,18 @@ def main():
         save_sig_matrix(matrix, args.matrix_output)
         print(" done!\nSignature matrix written to {}".format(args.matrix_output))
 
+    # jaccard similarity/estimate between 2 docs
     doc_id_1 = int(args.document1)
     doc_id_2 = int(args.document2)
     jaccard_estimate = jarccard_probability(matrix, doc_id_1, doc_id_2, num_hash_funcs)
     actual_jaccard = compute_jaccard(doc_id_1, doc_id_2, docs)
     print "Estimated jaccard: {0}, actual jaccard: {1}".format(jaccard_estimate, actual_jaccard)
+
+    # brute force nearest neighbors
+    print "Finding average jaccard by using nearest neighbors brute force..."
+    jaccard_all = brute_force_jaccard_all(int(args.k), docs)
+    # nearest_neighbors_str = [str(i[1]) for i in nearest_neighbors]
+    print "Average jaccard similarity is {0}".format(jaccard_all)
 
 if __name__ == '__main__':
     main()
