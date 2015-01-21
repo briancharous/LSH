@@ -18,6 +18,9 @@ import sys
 import random
 import marshal
 import argparse
+import heapq
+
+from max_heap import MaxHeap
 
 def get_data(filename, lines):
     """ read in data from filename """
