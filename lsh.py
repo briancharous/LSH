@@ -20,6 +20,7 @@ import marshal
 import argparse
 import heapq
 from collections import defaultdict
+import time
 
 def get_data(filename, lines):
     """ read in data from filename """
@@ -144,10 +145,9 @@ def load_sig_matrix(filename):
 
 def create_band_hashes(matrix, r):
     """ Do LSH on matrix using b bands (n/r bands) """
-    b = len(matrix)/r
     hashes = []
-    for i in xrange(0, len(matrix), b):
-        rows = matrix[i:i+b]
+    for i in xrange(0, len(matrix), r):
+        rows = matrix[i:i+r]
         tohash = []
         for j in xrange(0, len(rows[0])):
             # get a list containing 1 element from each row in a band at index j (doc id)
@@ -166,33 +166,46 @@ def get_candidate_set(hashes, ref_doc_id):
     """
     candidates_set = set()
     for dict in hashes:        # loop through all dictionaries in hashes
-        for key, set in dict.iteritems():   
-            for doc_id in set:          
-                if doc_id == ref_doc_id:    #check if target doc is in particular value set
-                    candiates_set.add( doc for doc in dict[key])    # add all docs in that value set in set of candidates
+        for key, s in dict.iteritems():   
+            if ref_doc_id in s:
+                for doc_id in s:  
+                    candidates_set.add(doc_id)   
     return candidates_set
 
-def find_k_neighbors_of_set (k,ref_doc_id, set, docs):
+def find_k_neighbors_of_set(k, ref_doc_id, s, docs):
     ''' returns k nearest neighbors of a given set and parameter k 
     '''
     nearest_neighbors = []
-    for neighbor in set:
+    for neighbor in s:
         if neighbor != ref_doc_id:
-            jarcard_compare = compute_jaccard (ref_doc_id, neighbor, docs)
+            jaccard_compare = compute_jaccard(ref_doc_id, neighbor, docs)
             if len(nearest_neighbors) < k:
-                nearest_neighbors.append(jaccard_compare, ref_doc_id)
+                nearest_neighbors.append((jaccard_compare, neighbor))
                 if len(nearest_neighbors) == k:
-                    heapq.heappush(nearest_neighbors, (jaccard_compare, doc_id))
+                    heapq.heappush(nearest_neighbors, (jaccard_compare, neighbor))
                     heapq.heappop(nearest_neighbors)
     return nearest_neighbors
 
-def lsh_k_neighbors (matrix, k,b, ref_doc_id, docs):
+def lsh_k_neighbors(matrix, k, b, ref_doc_id, docs):
     ''' call a series of helper function to return k nearest neighbor of a given doc_id and signature matrix
     '''
     nearest_neighbors = []
+    starth = time.time()
     hashes = create_band_hashes(matrix, b)
+    endh = time.time()
+    print "Band hashes computed in {0}ms".format(endh-starth)
+
+    startc = time.time()
     candidates_set = get_candidate_set(hashes, ref_doc_id)
-    nearest_neighbors = find_k_neighbors_of_set (k, ref_doc_id, set, docs)
+    nearest_neighbors = find_k_neighbors_of_set (k, ref_doc_id, candidates_set, docs)
+    while len(nearest_neighbors) < k:
+        # put some documents in there at random if k docs not found
+        rand_doc = random.randint(1, len(matrix))
+        j = compute_jaccard(ref_doc_id, rand_doc, docs)
+        nearest_neighbors.append((j, rand_doc))
+    endc = time.time()
+    print "Found nearest neighbors in {0}ms using LSH".format(endc-startc)
+
     return nearest_neighbors
 
 def main():
@@ -200,8 +213,7 @@ def main():
     parser.add_argument('-w', '--words', required=True, help='File containing document word counts')
     parser.add_argument('-l', '--lines', required=False, help='Number of lines to read from the words file')
     parser.add_argument('-n', '--number_of_hashes', required=False, help='Number of has functions to include in the signature matrix')
-    parser.add_argument('-d1', '--document1', required=True, help='First document ID to compare')
-    parser.add_argument('-d2', '--document2', required=True, help='Second document ID to compare')
+    parser.add_argument('-d', '--document1', required=True, help='First document ID to compare')
     parser.add_argument('-o', '--matrix_output', required=False, help='Filename to dump matrix to')
     parser.add_argument('-m', '--matrix_file', required=False, help='Filename of saved signature matrix')
     parser.add_argument('-k', '--k', required=True, help='Number of nearest neighbors to find')
@@ -248,27 +260,33 @@ def main():
         save_sig_matrix(matrix, args.matrix_output)
         print(" done!\nSignature matrix written to {}".format(args.matrix_output))
 
-    # jaccard similarity/estimate between 2 docs
-    doc_id_1 = int(args.document1)
-    doc_id_2 = int(args.document2)
-    jaccard_estimate = jarccard_probability(matrix, doc_id_1, doc_id_2, num_hash_funcs)
-    actual_jaccard = compute_jaccard(doc_id_1, doc_id_2, docs)
-    print "Estimated jaccard: {0}, actual jaccard: {1}".format(jaccard_estimate, actual_jaccard)
-
     # brute force nearest neighbors
-    k = int (args.k)
+    doc_id_1 = int(args.document1)
+    k = int(args.k)
     r = int(args.number_of_rows_in_band)
+    sys.stdout.write("\nFinding nearest {0} neighbors by brute force...".format(k))
+    sys.stdout.flush()
+    start = time.time()
     brute_force_neighbors = brute_force_nearest_neighbors(k, doc_id_1, docs)
-    print "Finding {0} nearest neighbors by brute force for ducement: {1}.". format(str(brute_force_neighbors), doc_id_1)
-    jaccard_all = brute_force_jaccard_all (k, docs)
+    end = time.time()
+    sys.stdout.write(" done in {0}ms\n\nFound:\n".format(end-start))
+    for neighbor in brute_force_neighbors:
+        print "Document ID: {0}, Similarity: {1}".format(neighbor[1], neighbor[0])
+    print ""
+    # print "Finding {0} nearest neighbors by brute force for docement: {1}.".format(str(brute_force_neighbors), doc_id_1)
     
-    #print "Finding average jaccard to be: %8.2f  by using nearest neighbors brute force. " %()
-    # nearest_neighbors_str = [str(i[1]) for i in nearest_neighbors]
-    # print "Average jaccard similarity is {0}".format(jaccard_all)
+    print "Finding average jaccard similarity among all documents by brute force..."
+    jaccard_all = brute_force_jaccard_all(k, docs)
+    print "Average jaccard similarity is {0}\n".format(jaccard_all)
 
     # call k neighbors with LSH approach
-    lsh_neighbors = lsh_k_neighbors (matrix, k,r, doc_id_1, docs)
-    print "Finding {0} nearest neighbors by LSH approach".format(str(lsh_neighbors))
+    sys.stdout.write("Finding nearest {0} neighbors by LSH...".format(k))
+    sys.stdout.flush()
+    lsh_neighbors = lsh_k_neighbors(matrix, k,r, doc_id_1, docs)
+    print "\nFound:"
+    for neighbor in lsh_neighbors:
+        print "Document ID: {0}, Similarity: {1}".format(neighbor[1], neighbor[0])
+    # print "Finding {0} nearest neighbors by LSH approach".format(str(lsh_neighbors))
 
 if __name__ == '__main__':
     main()
