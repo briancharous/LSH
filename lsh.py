@@ -142,8 +142,9 @@ def load_sig_matrix(filename):
         return matrix
     return None
 
-def create_band_hashes(matrix, b):
-    """ Do LSH on matrix using b bands """
+def create_band_hashes(matrix, r):
+    """ Do LSH on matrix using b bands (n/r bands) """
+    b = len(matrix)/r
     hashes = []
     for i in xrange(0, len(matrix), b):
         rows = matrix[i:i+b]
@@ -204,7 +205,7 @@ def main():
     parser.add_argument('-o', '--matrix_output', required=False, help='Filename to dump matrix to')
     parser.add_argument('-m', '--matrix_file', required=False, help='Filename of saved signature matrix')
     parser.add_argument('-k', '--k', required=True, help='Number of nearest neighbors to find')
-    parser.add_argument('-b', '--number_of_bands', required = True, help ='Number of bands for LSH approach')
+    parser.add_argument('-r', '--number_of_rows_in_band', required = True, help ='Number of bands for LSH approach')
 
     args = parser.parse_args()
 
@@ -256,7 +257,7 @@ def main():
 
     # brute force nearest neighbors
     k = int (args.k)
-    b = int(args.number_of_bands)
+    r = int(args.number_of_rows_in_band)
     brute_force_neighbors = brute_force_nearest_neighbors(k, doc_id_1, docs)
     print "Finding {0} nearest neighbors by brute force for ducement: {1}.". format(str(brute_force_neighbors), doc_id_1)
     jaccard_all = brute_force_jaccard_all (k, docs)
@@ -266,7 +267,7 @@ def main():
     # print "Average jaccard similarity is {0}".format(jaccard_all)
 
     # call k neighbors with LSH approach
-    lsh_neighbors = lsh_k_neighbors (matrix, k,b, doc_id_1, docs)
+    lsh_neighbors = lsh_k_neighbors (matrix, k,r, doc_id_1, docs)
     print "Finding {0} nearest neighbors by LSH approach".format(str(lsh_neighbors))
 
 if __name__ == '__main__':
