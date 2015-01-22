@@ -3,14 +3,21 @@ lsh.py by Brian Charous and Yawen Chen
 for CS324 Winter 2015
 
 This program takes in a text file with word counts and 
-computes the jaccard similarity between 2 documents and
-estimates the jaccard similarity by generating a signature matrix
+computes the average jaccard similarity between all documents.
+It also finds k nearest neighbors do said document using brute force
+and locality sensitive hashing. 
 
-To run: argument 1 is the filename containing the word counts
-        argument 2 is the number of lines to read from said file; 'all' is equivalent to the number of lines in the file
-        argument 3 is number of has functions to generate for the signature matrix
-        arguments 4 and 5 are the document ids of of which to compute the jaccard similarity
+To run: -w is the filename containing the word counts
+        -l is the number of lines to read from said file; 'all' is equivalent to the number of lines in the file
+        -n is number of has functions to generate for the signature matrix
+        -d is the document id of of which to compute the jaccard similarity with
+        -k is the number of nearest neighbors to find (of document d)
+        -r is the number of rows in a band for the LSH approach
+        -m loads a saved matrix from file
+        -o saves a signature matrix to a file
 
+ex: pypy lsh.py -w docword.enron.txt -d 12 -k 10 -l 500000 -r 6 -n 100
+(to find documents k=10 documents similar to document 12, reading in 500000 lines, using 6 rows/band and 100 hashes in the signature matrix)
 """
 
 from __future__ import division
