@@ -200,7 +200,7 @@ def lsh_k_neighbors(matrix, k, b, ref_doc_id, docs):
     starth = time.time()
     hashes = create_band_hashes(matrix, b)
     endh = time.time()
-    print "Band hashes computed in {0}ms".format(endh-starth)
+    print "Band hashes computed in {0}s".format(endh-starth)
 
     startc = time.time()
     candidates_set = get_candidate_set(hashes, ref_doc_id)
@@ -211,7 +211,7 @@ def lsh_k_neighbors(matrix, k, b, ref_doc_id, docs):
         j = compute_jaccard(ref_doc_id, rand_doc, docs)
         nearest_neighbors.append((j, rand_doc))
     endc = time.time()
-    print "Found nearest neighbors in {0}ms using LSH".format(endc-startc)
+    print "Found nearest neighbors in {0}s using LSH".format(endc-startc)
 
     return nearest_neighbors
 
@@ -276,7 +276,7 @@ def main():
     start = time.time()
     brute_force_neighbors = brute_force_nearest_neighbors(k, doc_id_1, docs)
     end = time.time()
-    sys.stdout.write(" done in {0}ms\n\nFound:\n".format(end-start))
+    sys.stdout.write(" done in {0}s\n\nFound:\n".format(end-start))
     for neighbor in brute_force_neighbors:
         print "Document ID: {0}, Similarity: {1}".format(neighbor[1], neighbor[0])
     print ""
