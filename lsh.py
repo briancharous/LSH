@@ -159,7 +159,18 @@ def create_band_hashes(matrix, b):
             d[key].add(value)
         hashes.append(d)
     return hashes
-    
+
+def get_candidate_set(hashes, ref_doc_id):
+    """ returns a set of all candidate pairs of given doc_id with the data in the given dictionaries
+    """
+    candidates_set = set()
+    for dict in hashes:        # loop through all dictionaries in hashes
+        for key, set in dict.iteritems():   
+            for doc_id in set:          
+                if doc_id == ref_doc_id:    #check if target doc is in particular value set
+                    candiates_set.add( doc for doc in dict[key])    # add all docs in that value set in set of candidates
+    return candidates_set
+
 def find_k_neighbors_of_set (k,ref_doc_id, set, docs):
     ''' returns k nearest neighbors of a given set and parameter k 
     '''
@@ -170,8 +181,17 @@ def find_k_neighbors_of_set (k,ref_doc_id, set, docs):
             if len(nearest_neighbors) < k:
                 nearest_neighbors.append(jaccard_compare, ref_doc_id)
                 if len(nearest_neighbors) == k:
-                     heapq.heappush(nearest_neighbors, (jaccard_compare, doc_id))
-                      heapq.heappop(nearest_neighbors)
+                    heapq.heappush(nearest_neighbors, (jaccard_compare, doc_id))
+                    heapq.heappop(nearest_neighbors)
+    return nearest_neighbors
+
+def lsh_k_neighbors (matrix, k,b, ref_doc_id, docs):
+    ''' call a series of helper function to return k nearest neighbor of a given doc_id and signature matrix
+    '''
+    nearest_neighbors = []
+    hashes = create_band_hashes(matrix, b)
+    candidates_set = get_candidate_set(hashes, ref_doc_id)
+    nearest_neighbors = find_k_neighbors_of_set (k, ref_doc_id, set, docs)
     return nearest_neighbors
 
 def main():
@@ -239,6 +259,7 @@ def main():
     # print "Average jaccard similarity is {0}".format(jaccard_all)
 
     band_hashes = create_band_hashes(matrix, 3)
+    lsh_neighbors = lsh_k_neighbors (matrix, k,b, doc_id_1, docs)
 
 if __name__ == '__main__':
     main()
